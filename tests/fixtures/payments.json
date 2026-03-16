@@ -1,0 +1,53 @@
+[
+  {
+    "payment_id": "pay_001",
+    "sender": {
+      "name": "Alice Corp",
+      "account_id": "GB29NWBK60161300000001",
+      "bank": "Barclays"
+    },
+    "recipient": {
+      "name": "Acme Consulting Ltd",
+      "account_id": "GB29NWBK60161331926819",
+      "bank": "NatWest"
+    },
+    "amount": 15000.0,
+    "currency": "GBP",
+    "reference": "Invoice INV-2024-001",
+    "timestamp": "2024-11-15T10:30:00Z"
+  },
+  {
+    "payment_id": "pay_002",
+    "sender": {
+      "name": "Alice Corp",
+      "account_id": "GB29NWBK60161300000001",
+      "bank": "Barclays"
+    },
+    "recipient": {
+      "name": "FastCash Holdings",
+      "account_id": "GB29NWBK60161399999999",
+      "bank": "NatWest"
+    },
+    "amount": 95000.0,
+    "currency": "GBP",
+    "reference": "Urgent transfer",
+    "timestamp": "2024-11-15T11:00:00Z"
+  },
+  {
+    "payment_id": "pay_003",
+    "sender": {
+      "name": "Alice Corp",
+      "account_id": "GB29NWBK60161300000001",
+      "bank": "Barclays"
+    },
+    "recipient": {
+      "name": "TechFlow Solutions",
+      "account_id": "GB82WEST12345698765433",
+      "bank": "Westpac"
+    },
+    "amount": 8500.0,
+    "currency": "GBP",
+    "reference": "Software licence renewal",
+    "timestamp": "2024-11-15T12:00:00Z"
+  }
+]

@@ -1,0 +1,12 @@
+knowledge/risk.db
+.env
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
