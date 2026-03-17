@@ -41,7 +41,7 @@ Each agent runs an **agentic tool-use loop**: the LLM calls its scoped DB tool t
 
 ```bash
 # 1. Install dependencies
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 
 # 2. Configure environment
 cp .env.example .env
@@ -98,7 +98,7 @@ Five recipients seeded in `knowledge/seed.py`:
 | Recipient | Account | Risk Profile |
 |---|---|---|
 | TechFlow Solutions | GB82WEST12345698765433 | Safe — established, clean history |
-| Green Energy Partners | GB82WEST12345698765500 | Safe — new company, no flags |
+| Green Energy Partners | GB82WEST12345698765500 | Safe — established company, clean history |
 | Acme Consulting Ltd | GB29NWBK60161331926819 | Ambiguous — active, one old media hit |
 | Nova Import Export | GB29NWBK60161388888888 | Risky — PEP connection, unusual patterns |
 | FastCash Holdings | GB29NWBK60161399999999 | High risk — sanctions hit + adverse media |
