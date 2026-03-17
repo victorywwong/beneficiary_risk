@@ -1,10 +1,10 @@
 """Versioned prompt templates and tool schemas."""
 
 PLANNER_PROMPT_VERSION = "planner_v2"
-COMPANY_PROMPT_VERSION = "company_v3"
-ADVERSE_MEDIA_PROMPT_VERSION = "adverse_media_v3"
-PAYMENT_PATTERN_PROMPT_VERSION = "payment_pattern_v3"
-SANCTIONS_PROMPT_VERSION = "sanctions_v3"
+COMPANY_PROMPT_VERSION = "company_v4"
+ADVERSE_MEDIA_PROMPT_VERSION = "adverse_media_v5"
+PAYMENT_PATTERN_PROMPT_VERSION = "payment_pattern_v4"
+SANCTIONS_PROMPT_VERSION = "sanctions_v4"
 
 # ---------------------------------------------------------------------------
 # response_format schema — used for all final risk assessments
@@ -167,8 +167,10 @@ Which specialist agents should investigate this payment?"""
 COMPANY_SYSTEM = (
     "You are a company registry specialist for payment risk assessment. "
     "Use the get_company_data tool to retrieve company information, then assess risk. "
-    "Risk criteria: dissolved/dormant status = HIGH, overdue filings = MEDIUM, "
-    "recently incorporated (<1 year) = MEDIUM, active with clean filings = LOW."
+    "Risk criteria: dissolved/dormant status = HIGH; "
+    "overdue filings = MEDIUM; "
+    "incorporated strictly less than 12 months before the payment date = MEDIUM; "
+    "active with up-to-date filings, incorporated 12+ months ago = LOW."
 )
 
 COMPANY_USER = (
@@ -180,8 +182,10 @@ COMPANY_USER = (
 ADVERSE_MEDIA_SYSTEM = (
     "You are an adverse media specialist for payment risk assessment. "
     "Use the get_adverse_media tool to retrieve news and scam reports, then assess risk. "
-    "Risk criteria: recent high-severity incidents (<12 months) = HIGH, "
-    "older or low-severity incidents = MEDIUM, no adverse media = LOW."
+    "Base your signal strictly on the severity field and published_date in the retrieved records. "
+    "Risk criteria: severity='high' AND published within the last 12 months = HIGH; "
+    "any other hit (severity='medium', severity='low', or older than 12 months) = MEDIUM; "
+    "no records found = LOW."
 )
 
 ADVERSE_MEDIA_USER = (
@@ -193,8 +197,10 @@ ADVERSE_MEDIA_USER = (
 PAYMENT_PATTERN_SYSTEM = (
     "You are a payment pattern analyst for financial risk assessment. "
     "Use the get_payment_history tool to retrieve transaction data, then assess risk. "
-    "Risk criteria: flagged_count > 3 = HIGH, current payment >> avg_amount_gbp = MEDIUM, "
-    "no history = UNKNOWN, clean history = LOW."
+    "Risk criteria: flagged_count > 3 = HIGH; "
+    "flagged_count > 0 AND current payment amount > 2x avg_amount_gbp = MEDIUM; "
+    "flagged_count = 0 = LOW regardless of payment size — a larger-than-usual payment to a clean recipient is not a risk signal; "
+    "no history = UNKNOWN."
 )
 
 PAYMENT_PATTERN_USER = (
@@ -206,7 +212,10 @@ PAYMENT_PATTERN_USER = (
 SANCTIONS_SYSTEM = (
     "You are a sanctions and PEP screening specialist. This is a CRITICAL compliance check. "
     "Use the get_sanctions_data tool to screen the recipient. "
-    "Risk criteria: any sanctions or PEP match = HIGH (high confidence), no match = LOW."
+    "Risk criteria: "
+    "actual sanctions list match (OFAC, UN, EU, etc.) = HIGH — this is a legal prohibition; "
+    "PEP (politically exposed person) match only = MEDIUM — requires enhanced due diligence, not prohibited; "
+    "no match = LOW."
 )
 
 SANCTIONS_USER = (

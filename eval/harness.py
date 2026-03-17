@@ -1,6 +1,10 @@
 """Evaluation harness: run labeled payments and report accuracy/consistency."""
 import asyncio
 import json
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from datetime import datetime, timezone
 from temporalio.client import Client
 from config import TEMPORAL_HOST, TASK_QUEUE
@@ -9,24 +13,63 @@ from schemas.payment import Payment
 from schemas.risk_decision import Decision
 from workflows.investigate import InvestigatePaymentWorkflow
 
-# Labeled payments with expected decisions
+# Labeled payments with expected decisions — one per seeded recipient
 LABELED_PAYMENTS = [
     {
         "payment": {
-            "payment_id": "eval_safe_001",
+            "payment_id": "eval_techflow_001",
             "sender": {"name": "Evaluator Corp", "account_id": "EVAL001", "bank": "Test Bank"},
             "recipient": {"name": "TechFlow Solutions", "account_id": "GB82WEST12345698765433", "bank": "Westpac"},
             "amount": 8500.0,
             "currency": "GBP",
-            "reference": "Software licence",
+            "reference": "Software licence renewal",
             "timestamp": "2024-11-15T12:00:00Z",
         },
         "expected": Decision.APPROVE,
-        "label": "safe_recipient",
+        "label": "safe_established",
     },
     {
         "payment": {
-            "payment_id": "eval_risky_001",
+            "payment_id": "eval_greenenergy_001",
+            "sender": {"name": "Evaluator Corp", "account_id": "EVAL001", "bank": "Test Bank"},
+            "recipient": {"name": "Green Energy Partners", "account_id": "GB82WEST12345698765500", "bank": "Westpac"},
+            "amount": 12000.0,
+            "currency": "GBP",
+            "reference": "Consulting services",
+            "timestamp": "2024-11-15T10:00:00Z",
+        },
+        "expected": Decision.APPROVE,
+        "label": "safe_new_company",
+    },
+    {
+        "payment": {
+            "payment_id": "eval_acme_001",
+            "sender": {"name": "Evaluator Corp", "account_id": "EVAL001", "bank": "Test Bank"},
+            "recipient": {"name": "Acme Consulting Ltd", "account_id": "GB29NWBK60161331926819", "bank": "NatWest"},
+            "amount": 45000.0,
+            "currency": "GBP",
+            "reference": "Advisory services Q4",
+            "timestamp": "2024-11-15T09:00:00Z",
+        },
+        "expected": Decision.REVIEW,
+        "label": "ambiguous_old_media_hit",
+    },
+    {
+        "payment": {
+            "payment_id": "eval_nova_001",
+            "sender": {"name": "Evaluator Corp", "account_id": "EVAL001", "bank": "Test Bank"},
+            "recipient": {"name": "Nova Import Export", "account_id": "GB29NWBK60161388888888", "bank": "NatWest"},
+            "amount": 250000.0,
+            "currency": "GBP",
+            "reference": "Goods shipment",
+            "timestamp": "2024-11-15T08:00:00Z",
+        },
+        "expected": Decision.REVIEW,
+        "label": "risky_pep_connection",
+    },
+    {
+        "payment": {
+            "payment_id": "eval_fastcash_001",
             "sender": {"name": "Evaluator Corp", "account_id": "EVAL001", "bank": "Test Bank"},
             "recipient": {"name": "FastCash Holdings", "account_id": "GB29NWBK60161399999999", "bank": "NatWest"},
             "amount": 95000.0,

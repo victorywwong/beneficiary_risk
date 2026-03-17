@@ -9,6 +9,15 @@ from llm.prompts import RISK_ASSESSMENT_RESPONSE_FORMAT
 from observability.logging import get_logger
 from schemas.agent_result import AgentResult, RiskSignal
 from schemas.payment import Payment
+from config import LANGFUSE_PUBLIC_KEY
+
+if LANGFUSE_PUBLIC_KEY:
+    from langfuse import observe
+else:
+    def observe(**__):
+        def decorator(fn):
+            return fn
+        return decorator
 
 log = get_logger()
 
@@ -18,7 +27,8 @@ MAX_TOOL_ITERATIONS = 5
 class BaseAgent(ABC):
     name: str
     timeout_sec: float = 30.0
-    db_tools: list[dict] = []  # DB lookup tools — scoped per agent
+    db_tools: list[dict] = []
+    prompt_version: str | None = None
 
     def __init__(self):
         self.client = OpenRouterClient()
@@ -32,6 +42,7 @@ class BaseAgent(ABC):
             data["agent_name"] = self.name
             result = AgentResult.model_validate(data)
             result.duration_ms = (time.monotonic() - start) * 1000
+            result.prompt_version = self.prompt_version
             log.info(
                 "agent_completed",
                 agent=self.name,
@@ -67,10 +78,12 @@ class BaseAgent(ABC):
                 duration_ms=duration_ms,
             )
 
-    async def _run_tool_loop(self, messages: list[dict]) -> dict:
+    @observe(name="tool_loop")
+    async def _run_tool_loop(self, messages: list[dict], payment_id: str) -> dict:
         """
         Agentic loop: call LLM with DB tools + response_format on every turn.
         Model calls tools to fetch data; when done it returns structured JSON.
+        @observe groups all nested LLM calls under this span in Langfuse.
         """
         for _ in range(MAX_TOOL_ITERATIONS):
             msg = await self.client.complete(
@@ -82,7 +95,6 @@ class BaseAgent(ABC):
             )
 
             if not msg.tool_calls:
-                # Model chose to respond with structured JSON — we're done
                 return json.loads(msg.content)
 
             # Append assistant message (tool calls) to history
@@ -102,8 +114,8 @@ class BaseAgent(ABC):
             # Execute each DB tool call and append results
             for tc in msg.tool_calls:
                 args = json.loads(tc.function.arguments)
-                result = await self._execute_db_tool(tc.function.name, args)
-                log.info("tool_result", agent=self.name, tool=tc.function.name)
+                result = await self._dispatch_db_tool(tc.function.name, args)
+                log.info("tool_result", agent=self.name, tool=tc.function.name, args=args)
                 messages.append({
                     "role": "tool",
                     "tool_call_id": tc.id,
@@ -111,6 +123,11 @@ class BaseAgent(ABC):
                 })
 
         raise RuntimeError(f"Agent {self.name} exceeded {MAX_TOOL_ITERATIONS} tool iterations")
+
+    @observe(name="db_tool")
+    async def _dispatch_db_tool(self, tool_name: str, args: dict):
+        """Thin wrapper around _execute_db_tool — traced as a span in Langfuse."""
+        return await self._execute_db_tool(tool_name, args)
 
     @abstractmethod
     async def _invoke(self, payment: Payment) -> dict: ...

@@ -1,9 +1,21 @@
-"""Async OpenRouter LLM client using the OpenAI-compatible SDK."""
-from openai import AsyncOpenAI
+"""Async OpenRouter LLM client using the OpenAI-compatible SDK.
+
+Uses the Langfuse OpenAI wrapper when LANGFUSE_PUBLIC_KEY is configured,
+automatically tracing every LLM call (messages, tool calls, token usage).
+Falls back to the standard openai SDK when Langfuse is not configured.
+"""
 from openai.types.chat import ChatCompletionMessage
-from config import OPENROUTER_API_KEY, MODEL_ID
+from config import OPENROUTER_API_KEY, MODEL_ID, LANGFUSE_PUBLIC_KEY
+from observability.logging import get_logger
+
+if LANGFUSE_PUBLIC_KEY:
+    from langfuse.openai import AsyncOpenAI  # type: ignore[no-redef]
+else:
+    from openai import AsyncOpenAI
 
 BASE_URL = "https://openrouter.ai/api/v1"
+
+log = get_logger()
 
 
 class OpenRouterClient:
@@ -25,17 +37,6 @@ class OpenRouterClient:
     ) -> ChatCompletionMessage:
         """Single chat completion call. Returns the message object."""
         resolved_model = model or MODEL_ID
-        key_preview = f"{OPENROUTER_API_KEY[:8]}..." if OPENROUTER_API_KEY else "NOT SET"
-        tool_names = [t["function"]["name"] for t in tools] if tools else []
-        print(
-            f"[llm] endpoint={BASE_URL}/chat/completions "
-            f"model={resolved_model} "
-            f"key={key_preview} "
-            f"tools={tool_names} "
-            f"response_format={response_format.get('type') if response_format else None}",
-            flush=True,
-        )
-
         kwargs: dict = dict(
             model=resolved_model,
             messages=messages,
@@ -49,6 +50,14 @@ class OpenRouterClient:
             kwargs["response_format"] = response_format
 
         response = await self._client.chat.completions.create(**kwargs)
+        usage = response.usage
+        log.info(
+            "llm_response",
+            model=resolved_model,
+            prompt_tokens=usage.prompt_tokens if usage else None,
+            completion_tokens=usage.completion_tokens if usage else None,
+            total_tokens=usage.total_tokens if usage else None,
+        )
         return response.choices[0].message
 
     async def close(self):

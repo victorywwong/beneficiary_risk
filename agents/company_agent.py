@@ -10,6 +10,7 @@ log = get_logger()
 class CompanyAgent(BaseAgent):
     name = "company"
     db_tools = [GET_COMPANY_DATA_TOOL]
+    prompt_version = COMPANY_PROMPT_VERSION
 
     async def _invoke(self, payment: Payment) -> dict:
         log.info("llm_call", agent=self.name, prompt_version=COMPANY_PROMPT_VERSION)
@@ -21,7 +22,7 @@ class CompanyAgent(BaseAgent):
                 amount=payment.amount,
                 currency=payment.currency,
             )},
-        ])
+        ], payment_id=payment.payment_id)
 
     async def _execute_db_tool(self, tool_name: str, args: dict):
         if tool_name == "get_company_data":

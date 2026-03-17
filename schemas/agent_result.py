@@ -18,3 +18,4 @@ class AgentResult(BaseModel):
     is_available: bool = True
     error: str | None = None
     duration_ms: float = 0.0
+    prompt_version: str | None = None

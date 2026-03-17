@@ -19,7 +19,7 @@ SIGNAL_SCORES = {
     RiskSignal.UNKNOWN: 0.5,  # treat unknown as medium risk
 }
 
-REVIEW_THRESHOLD = 0.3
+REVIEW_THRESHOLD = 0.1
 REJECT_THRESHOLD = 0.6
 
 
@@ -73,7 +73,7 @@ def synthesize(
             continue
         weight = AGENT_WEIGHTS.get(result.agent_name, 0.1)
         score = SIGNAL_SCORES[result.risk_signal]
-        weighted_score += weight * score * result.confidence
+        weighted_score += weight * score
         total_weight += weight
         available_count += 1
         reasoning_parts.append(

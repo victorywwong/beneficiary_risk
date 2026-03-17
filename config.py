@@ -10,3 +10,7 @@ MAX_RETRIES: int = int(os.getenv("MAX_RETRIES", "1"))
 DB_PATH: str = os.getenv("DB_PATH", "knowledge/risk.db")
 TEMPORAL_HOST: str = os.getenv("TEMPORAL_HOST", "localhost:7233")
 TASK_QUEUE: str = "risk-assessment"
+
+LANGFUSE_PUBLIC_KEY: str = os.getenv("LANGFUSE_PUBLIC_KEY", "")
+LANGFUSE_SECRET_KEY: str = os.getenv("LANGFUSE_SECRET_KEY", "")
+LANGFUSE_HOST: str = os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
